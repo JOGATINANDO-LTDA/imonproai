@@ -1,0 +1,55 @@
+services:
+  - type: web
+    name: imobpro-backend
+    runtime: python
+    plan: starter
+    buildCommand: cd backend && pip install -e .
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+    healthCheckPath: /health
+
+  - type: worker
+    name: imobpro-celery
+    runtime: python
+    plan: starter
+    buildCommand: cd backend && pip install -e .
+    startCommand: cd backend && celery -A app.celery_app worker --loglevel=info --concurrency=2
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+
+  - type: worker
+    name: imobpro-beat
+    runtime: python
+    plan: starter
+    buildCommand: cd backend && pip install -e .
+    startCommand: cd backend && celery -A app.celery_app beat --loglevel=info
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+
+  - type: web
+    name: imobpro-frontend
+    runtime: node
+    plan: starter
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && npm start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        sync: false

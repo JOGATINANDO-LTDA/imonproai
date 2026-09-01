@@ -1,0 +1,109 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Node
+node_modules/
+.next/
+out/
+.pnp.*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+
+# Logs
+*.log
+logs/
+
+# Byte-compiled
+*.pyc
+*.pyo
+
+# Coverage
+htmlcov/
+.coverage
+coverage.xml
+
+# Testing
+.pytest_cache/
+.tox/
+.nox/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+.pdm-python
+
+# pyright
+pyrightconfig.json
+
+# ruff
+.ruff_cache/
+
+# mypy
+.mypy_cache/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Database
+*.sqlite3
+*.db
+
+# pgvector
+*.dump
+
+# Langfuse
+langfuse/
+
+# Temp
+tmp/
+temp/
+*.tmp
+*.bak
+
+# ============================================
+# LOCAL ONLY - NÃO COMMITAR
+# ============================================
+# Pasta de aprendizagem/documentação pessoal
+.vibecoding/docs/aprendizagem/
+
+# Logs de sessão anteriores
+.vibecoding/memory/session-logs/
