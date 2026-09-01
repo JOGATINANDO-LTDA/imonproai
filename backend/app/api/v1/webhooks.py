@@ -105,7 +105,7 @@ async def whatsapp_webhook(instance: str, request: Request):
                 role="user",
                 content=text,
                 content_type=content_type,
-                metadata={"phone": phone, "whatsapp_message_id": conversation_id},
+                extra_data={"phone": phone, "whatsapp_message_id": conversation_id},
             )
             db.add(user_msg)
 

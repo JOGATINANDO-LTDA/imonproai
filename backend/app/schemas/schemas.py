@@ -180,7 +180,7 @@ class MessageResponse(BaseModel):
     role: str
     content: str
     content_type: str
-    metadata: dict
+    extra_data: dict
     created_at: datetime
 
     model_config = {"from_attributes": True}
