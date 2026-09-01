@@ -28,7 +28,9 @@ def search_properties(
     property_type: str | None = None,
 ) -> str:
     """Busca imóveis disponíveis no portfólio da imobiliária. Use quando o lead perguntar sobre imóveis disponíveis."""
-    return f"Buscando imóveis: preço={min_price}-{max_price}, quartos={bedrooms}, tipo={property_type}"
+    return (
+        f"Buscando imóveis: preço={min_price}-{max_price}, quartos={bedrooms}, tipo={property_type}"
+    )
 
 
 @tool

@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 
@@ -17,21 +17,21 @@ whatsapp_service = WhatsAppService()
 
 @celery_app.task(name="app.tasks.follow_ups.process_pending_follow_ups")
 async def process_pending_follow_ups():
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     async with AsyncSessionLocal() as db:
         result = await db.execute(
             select(FollowUp).where(
                 FollowUp.status == "pending",
                 FollowUp.scheduled_at <= now,
-            )
+            ),
         )
         follow_ups = result.scalars().all()
 
         for follow_up in follow_ups:
             try:
                 contact_result = await db.execute(
-                    select(Contact).where(Contact.id == follow_up.contact_id)
+                    select(Contact).where(Contact.id == follow_up.contact_id),
                 )
                 contact = contact_result.scalar_one_or_none()
                 if not contact:

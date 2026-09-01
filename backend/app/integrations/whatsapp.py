@@ -30,7 +30,9 @@ class WhatsAppService:
             response.raise_for_status()
             return response.json()
 
-    async def send_image(self, instance: str, to: str, image_url: str, caption: str = "") -> dict[str, Any]:
+    async def send_image(
+        self, instance: str, to: str, image_url: str, caption: str = ""
+    ) -> dict[str, Any]:
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{self.base_url}/message/sendImage/{instance}",
@@ -53,7 +55,11 @@ class WhatsAppService:
             return response.json()
 
     async def send_document(
-        self, instance: str, to: str, document_url: str, filename: str = ""
+        self,
+        instance: str,
+        to: str,
+        document_url: str,
+        filename: str = "",
     ) -> dict[str, Any]:
         async with httpx.AsyncClient() as client:
             response = await client.post(

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,8 +15,6 @@ from app.schemas.schemas import (
     ConversationListResponse,
     ConversationResponse,
     DashboardMetrics,
-    FollowUpCreate,
-    FollowUpResponse,
     PropertyCreate,
     PropertyResponse,
     PropertyUpdate,
@@ -30,7 +28,9 @@ router = APIRouter(prefix="/v1", tags=["API v1"])
 
 # ── Tenants ───────────────────────────────────────────────────────────────────
 @router.post("/tenants", response_model=TenantResponse, status_code=201)
-async def create_tenant(body: TenantCreate, db: AsyncSession = Depends(get_db), _: User = Depends(require_admin)):
+async def create_tenant(
+    body: TenantCreate, db: AsyncSession = Depends(get_db), _: User = Depends(require_admin)
+):
     tenant = Tenant(**body.model_dump())
     db.add(tenant)
     await db.flush()
@@ -48,7 +48,9 @@ async def list_tenants(db: AsyncSession = Depends(get_db), user: User = Depends(
 
 
 @router.get("/tenants/{tenant_id}", response_model=TenantResponse)
-async def get_tenant(tenant_id: str, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
+async def get_tenant(
+    tenant_id: str, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)
+):
     if user.role != "admin" and user.tenant_id != tenant_id:
         raise HTTPException(status_code=403, detail="Acesso negado")
     result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
@@ -72,7 +74,9 @@ async def list_users(db: AsyncSession = Depends(get_db), user: User = Depends(ge
 
 # ── Agents ────────────────────────────────────────────────────────────────────
 @router.post("/agents", response_model=AgentResponse, status_code=201)
-async def create_agent(body: AgentCreate, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
+async def create_agent(
+    body: AgentCreate, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)
+):
     agent = Agent(tenant_id=user.tenant_id, **body.model_dump())
     db.add(agent)
     await db.flush()
@@ -87,8 +91,12 @@ async def list_agents(db: AsyncSession = Depends(get_db), user: User = Depends(g
 
 
 @router.get("/agents/{agent_id}", response_model=AgentResponse)
-async def get_agent(agent_id: str, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
-    result = await db.execute(select(Agent).where(Agent.id == agent_id, Agent.tenant_id == user.tenant_id))
+async def get_agent(
+    agent_id: str, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)
+):
+    result = await db.execute(
+        select(Agent).where(Agent.id == agent_id, Agent.tenant_id == user.tenant_id)
+    )
     agent = result.scalar_one_or_none()
     if not agent:
         raise HTTPException(status_code=404, detail="Agente não encontrado")
@@ -97,9 +105,14 @@ async def get_agent(agent_id: str, db: AsyncSession = Depends(get_db), user: Use
 
 @router.patch("/agents/{agent_id}", response_model=AgentResponse)
 async def update_agent(
-    agent_id: str, body: AgentUpdate, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)
+    agent_id: str,
+    body: AgentUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
-    result = await db.execute(select(Agent).where(Agent.id == agent_id, Agent.tenant_id == user.tenant_id))
+    result = await db.execute(
+        select(Agent).where(Agent.id == agent_id, Agent.tenant_id == user.tenant_id)
+    )
     agent = result.scalar_one_or_none()
     if not agent:
         raise HTTPException(status_code=404, detail="Agente não encontrado")
@@ -112,7 +125,9 @@ async def update_agent(
 
 # ── Contacts ──────────────────────────────────────────────────────────────────
 @router.post("/contacts", response_model=ContactResponse, status_code=201)
-async def create_contact(body: ContactCreate, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
+async def create_contact(
+    body: ContactCreate, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)
+):
     contact = Contact(tenant_id=user.tenant_id, **body.model_dump())
     db.add(contact)
     await db.flush()
@@ -137,9 +152,11 @@ async def list_contacts(
 
 
 @router.get("/contacts/{contact_id}", response_model=ContactResponse)
-async def get_contact(contact_id: str, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
+async def get_contact(
+    contact_id: str, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)
+):
     result = await db.execute(
-        select(Contact).where(Contact.id == contact_id, Contact.tenant_id == user.tenant_id)
+        select(Contact).where(Contact.id == contact_id, Contact.tenant_id == user.tenant_id),
     )
     contact = result.scalar_one_or_none()
     if not contact:
@@ -149,10 +166,13 @@ async def get_contact(contact_id: str, db: AsyncSession = Depends(get_db), user:
 
 @router.patch("/contacts/{contact_id}", response_model=ContactResponse)
 async def update_contact(
-    contact_id: str, body: ContactUpdate, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)
+    contact_id: str,
+    body: ContactUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     result = await db.execute(
-        select(Contact).where(Contact.id == contact_id, Contact.tenant_id == user.tenant_id)
+        select(Contact).where(Contact.id == contact_id, Contact.tenant_id == user.tenant_id),
     )
     contact = result.scalar_one_or_none()
     if not contact:
@@ -166,7 +186,9 @@ async def update_contact(
 
 # ── Properties ────────────────────────────────────────────────────────────────
 @router.post("/properties", response_model=PropertyResponse, status_code=201)
-async def create_property(body: PropertyCreate, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
+async def create_property(
+    body: PropertyCreate, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)
+):
     prop = Property(tenant_id=user.tenant_id, **body.model_dump())
     db.add(prop)
     await db.flush()
@@ -200,9 +222,11 @@ async def list_properties(
 
 
 @router.get("/properties/{property_id}", response_model=PropertyResponse)
-async def get_property(property_id: str, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
+async def get_property(
+    property_id: str, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)
+):
     result = await db.execute(
-        select(Property).where(Property.id == property_id, Property.tenant_id == user.tenant_id)
+        select(Property).where(Property.id == property_id, Property.tenant_id == user.tenant_id),
     )
     prop = result.scalar_one_or_none()
     if not prop:
@@ -212,10 +236,13 @@ async def get_property(property_id: str, db: AsyncSession = Depends(get_db), use
 
 @router.patch("/properties/{property_id}", response_model=PropertyResponse)
 async def update_property(
-    property_id: str, body: PropertyUpdate, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)
+    property_id: str,
+    body: PropertyUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     result = await db.execute(
-        select(Property).where(Property.id == property_id, Property.tenant_id == user.tenant_id)
+        select(Property).where(Property.id == property_id, Property.tenant_id == user.tenant_id),
     )
     prop = result.scalar_one_or_none()
     if not prop:
@@ -241,14 +268,16 @@ async def list_conversations(
         .where(Agent.tenant_id == user.tenant_id)
         .order_by(Conversation.updated_at.desc())
         .offset(skip)
-        .limit(limit)
+        .limit(limit),
     )
     return result.scalars().all()
 
 
 @router.get("/conversations/{conversation_id}", response_model=ConversationResponse)
 async def get_conversation(
-    conversation_id: str, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)
+    conversation_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     result = await db.execute(select(Conversation).where(Conversation.id == conversation_id))
     conv = result.scalar_one_or_none()
@@ -259,7 +288,9 @@ async def get_conversation(
 
 # ── Dashboard ─────────────────────────────────────────────────────────────────
 @router.get("/dashboard/metrics", response_model=DashboardMetrics)
-async def get_dashboard_metrics(db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
+async def get_dashboard_metrics(
+    db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)
+):
     tenant_id = user.tenant_id
 
     total_contacts = (
@@ -272,13 +303,17 @@ async def get_dashboard_metrics(db: AsyncSession = Depends(get_db), user: User =
 
     contacts_won = (
         await db.execute(
-            select(func.count(Contact.id)).where(Contact.tenant_id == tenant_id, Contact.status == "won")
+            select(func.count(Contact.id)).where(
+                Contact.tenant_id == tenant_id, Contact.status == "won"
+            ),
         )
     ).scalar() or 0
 
     contacts_lost = (
         await db.execute(
-            select(func.count(Contact.id)).where(Contact.tenant_id == tenant_id, Contact.status == "lost")
+            select(func.count(Contact.id)).where(
+                Contact.tenant_id == tenant_id, Contact.status == "lost"
+            ),
         )
     ).scalar() or 0
 

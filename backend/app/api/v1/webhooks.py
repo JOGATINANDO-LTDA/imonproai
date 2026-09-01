@@ -1,9 +1,7 @@
 import logging
-from datetime import datetime, timezone
 
 from fastapi import APIRouter, Request, Response
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agent.engine import ImobProAgent
 from app.core.config import get_settings
@@ -69,7 +67,9 @@ async def whatsapp_webhook(instance: str, request: Request):
                 return Response(status_code=200)
 
             contact_result = await db.execute(
-                select(Contact).where(Contact.whatsapp == phone, Contact.tenant_id == agent.tenant_id)
+                select(Contact).where(
+                    Contact.whatsapp == phone, Contact.tenant_id == agent.tenant_id
+                ),
             )
             contact = contact_result.scalar_one_or_none()
             if not contact:
@@ -87,7 +87,7 @@ async def whatsapp_webhook(instance: str, request: Request):
                     Conversation.contact_id == contact.id,
                     Conversation.agent_id == agent.id,
                     Conversation.status == "active",
-                )
+                ),
             )
             conversation = conv_result.scalar_one_or_none()
             if not conversation:
@@ -113,7 +113,7 @@ async def whatsapp_webhook(instance: str, request: Request):
                 select(Message)
                 .where(Message.conversation_id == conversation.id)
                 .order_by(Message.created_at.desc())
-                .limit(20)
+                .limit(20),
             )
             history = [
                 {"role": m.role, "content": m.content}

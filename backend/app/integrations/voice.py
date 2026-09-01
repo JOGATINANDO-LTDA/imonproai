@@ -2,7 +2,7 @@ import logging
 from typing import Any
 
 from twilio.rest import Client as TwilioClient
-from twilio.twiml.voice_response import Gather, Say, VoiceResponse
+from twilio.twiml.voice_response import Gather, VoiceResponse
 
 from app.core.config import get_settings
 
@@ -17,7 +17,9 @@ class VoiceService:
         self.client = TwilioClient(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
         self.phone_number = settings.TWILIO_PHONE_NUMBER
 
-    def create_inbound_twiml(self, greeting: str = "Olá! Bem-vindo à nossa imobiliária. Como posso ajudar?") -> str:
+    def create_inbound_twiml(
+        self, greeting: str = "Olá! Bem-vindo à nossa imobiliária. Como posso ajudar?"
+    ) -> str:
         response = VoiceResponse()
         gather = Gather(
             input="speech",

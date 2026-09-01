@@ -1,7 +1,6 @@
 import logging
-from typing import Any
 
-from fastapi import APIRouter, Form, Request, Response
+from fastapi import APIRouter, Form, Response
 from sqlalchemy import select
 
 from app.agent.engine import ImobProAgent
@@ -26,11 +25,13 @@ async def voice_inbound(From: str = Form(...), To: str = Form(...), CallSid: str
         result = await db.execute(select(Agent).where(Agent.phone_number == To))
         agent = result.scalar_one_or_none()
         if not agent:
-            twiml = voice_service.create_callback_twiml("Desculpe, não consegui atender sua chamada.")
+            twiml = voice_service.create_callback_twiml(
+                "Desculpe, não consegui atender sua chamada."
+            )
             return Response(content=twiml, media_type="application/xml")
 
         contact_result = await db.execute(
-            select(Contact).where(Contact.phone == phone, Contact.tenant_id == agent.tenant_id)
+            select(Contact).where(Contact.phone == phone, Contact.tenant_id == agent.tenant_id),
         )
         contact = contact_result.scalar_one_or_none()
         if not contact:
@@ -74,7 +75,7 @@ async def voice_speech_result(
             return Response(content=twiml, media_type="application/xml")
 
         contact_result = await db.execute(
-            select(Contact).where(Contact.phone == phone, Contact.tenant_id == agent.tenant_id)
+            select(Contact).where(Contact.phone == phone, Contact.tenant_id == agent.tenant_id),
         )
         contact = contact_result.scalar_one_or_none()
 
@@ -84,7 +85,7 @@ async def voice_speech_result(
                 Conversation.contact_id == contact.id if contact else False,
                 Conversation.channel == "voice",
                 Conversation.status == "active",
-            )
+            ),
         )
         conversation = conv_result.scalar_one_or_none()
         if not conversation:
@@ -113,11 +114,10 @@ async def voice_speech_result(
             select(Message)
             .where(Message.conversation_id == conversation.id)
             .order_by(Message.created_at.desc())
-            .limit(20)
+            .limit(20),
         )
         history = [
-            {"role": m.role, "content": m.content}
-            for m in reversed(hist_result.scalars().all())
+            {"role": m.role, "content": m.content} for m in reversed(hist_result.scalars().all())
         ]
 
         ai_response = await ai_agent.process_message(

@@ -1,6 +1,6 @@
 from app.models.base import (
-    AuditLog,
     Agent,
+    AuditLog,
     Base,
     Contact,
     Conversation,
