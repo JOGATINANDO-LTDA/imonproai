@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.auth import router as auth_router
 from app.api.v1.endpoints import router as api_router
+from app.api.v1.seed import router as seed_router
 from app.api.v1.voice_routes import router as voice_router
 from app.api.v1.webhooks import router as webhook_router
 from app.core.config import get_settings
@@ -32,6 +33,7 @@ app.add_middleware(
 
 app.include_router(auth_router, prefix="/api")
 app.include_router(api_router, prefix="/api")
+app.include_router(seed_router, prefix="/api")
 app.include_router(webhook_router, prefix="/api")
 app.include_router(voice_router, prefix="/api")
 

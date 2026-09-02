@@ -1,15 +1,28 @@
 'use client';
 
 import Link from 'next/link';
+import { useTheme } from '@/lib/theme';
 
 export default function Home() {
+  const { theme, toggleTheme } = useTheme();
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 dark:from-slate-900 dark:to-slate-800">
+      {/* Theme toggle */}
+      <div className="fixed top-4 right-4">
+        <button
+          onClick={toggleTheme}
+          className="p-2 rounded-lg text-gray-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-700/50 transition-colors"
+        >
+          {theme === 'light' ? '🌙' : '☀️'}
+        </button>
+      </div>
+
       <div className="text-center space-y-8 p-8">
         <div className="space-y-4">
-          <h1 className="text-5xl font-bold text-primary-900">ImobPro.ai</h1>
-          <p className="text-xl text-primary-700">Agente Comercial de IA para Imobiliárias</p>
-          <p className="text-gray-600 max-w-md mx-auto">
+          <h1 className="text-5xl font-bold text-primary-900 dark:text-primary-100">ImobPro.ai</h1>
+          <p className="text-xl text-primary-700 dark:text-primary-300">Agente Comercial de IA para Imobiliárias</p>
+          <p className="text-gray-600 dark:text-slate-400 max-w-md mx-auto">
             Seu vendedor virtual que não dorme, não esquece e fecha negócios 24/7
           </p>
         </div>
@@ -22,7 +35,7 @@ export default function Home() {
           </Link>
           <Link
             href="/login"
-            className="px-8 py-3 border border-primary-600 text-primary-600 rounded-lg font-medium hover:bg-primary-50 transition-colors"
+            className="px-8 py-3 border border-primary-600 text-primary-600 dark:text-primary-400 rounded-lg font-medium hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
           >
             Login
           </Link>
@@ -48,9 +61,9 @@ export default function Home() {
 
 function FeatureCard({ title, description }: { title: string; description: string }) {
   return (
-    <div className="p-6 bg-white rounded-xl shadow-sm border border-gray-100">
-      <h3 className="font-semibold text-gray-900 mb-2">{title}</h3>
-      <p className="text-sm text-gray-600">{description}</p>
+    <div className="p-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700">
+      <h3 className="font-semibold text-gray-900 dark:text-slate-100 mb-2">{title}</h3>
+      <p className="text-sm text-gray-600 dark:text-slate-400">{description}</p>
     </div>
   );
 }

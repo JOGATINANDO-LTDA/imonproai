@@ -38,9 +38,9 @@ export default function ConversationsPage() {
         <input
           type="text"
           placeholder="Buscar conversas..."
-          className="px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 w-64"
+          className="px-4 py-2 border border-gray-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 w-64"
         />
-        <select className="px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+        <select className="px-4 py-2 border border-gray-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500">
           <option value="">Todos os canais</option>
           <option value="whatsapp">WhatsApp</option>
           <option value="voice">Telefone</option>
@@ -50,32 +50,32 @@ export default function ConversationsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Conversation list */}
-        <div className="lg:col-span-1 bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="p-4 border-b border-gray-200">
-            <h3 className="font-semibold text-gray-900">Conversas ({conversations.length})</h3>
+        <div className="lg:col-span-1 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+          <div className="p-4 border-b border-gray-200 dark:border-slate-700">
+            <h3 className="font-semibold text-gray-900 dark:text-slate-100">Conversas ({conversations.length})</h3>
           </div>
-          <div className="divide-y divide-gray-200 max-h-[600px] overflow-y-auto">
+          <div className="divide-y divide-gray-200 dark:divide-slate-700 max-h-[600px] overflow-y-auto scrollbar-thin">
             {loading ? (
-              <div className="p-4 text-center text-gray-500 animate-pulse">Carregando...</div>
+              <div className="p-4 text-center text-gray-500 dark:text-slate-400 animate-pulse">Carregando...</div>
             ) : conversations.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">Nenhuma conversa</div>
+              <div className="p-4 text-center text-gray-500 dark:text-slate-400">Nenhuma conversa</div>
             ) : (
               conversations.map((conv) => (
                 <div
                   key={conv.id}
                   onClick={() => setSelected(conv.id)}
-                  className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
-                    selected === conv.id ? 'bg-primary-50 border-l-4 border-primary-500' : ''
+                  className={`p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors ${
+                    selected === conv.id ? 'bg-primary-50 dark:bg-primary-900/20 border-l-4 border-primary-500' : ''
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium text-gray-900 text-sm">{conv.contact_name}</span>
-                    <span className="text-xs text-gray-500">
+                    <span className="font-medium text-gray-900 dark:text-slate-100 text-sm">{conv.contact_name}</span>
+                    <span className="text-xs text-gray-500 dark:text-slate-400">
                       {channelIcons[conv.channel]} {conv.channel}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-600 truncate">{conv.last_message || conv.summary}</p>
-                  <p className="text-xs text-gray-400 mt-1">{formatDate(conv.last_message_at || conv.created_at)}</p>
+                  <p className="text-xs text-gray-600 dark:text-slate-400 truncate">{conv.last_message || conv.summary}</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">{formatDate(conv.last_message_at || conv.created_at)}</p>
                 </div>
               ))
             )}
@@ -83,17 +83,17 @@ export default function ConversationsPage() {
         </div>
 
         {/* Chat area */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200">
+        <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700">
           {selected ? (
             <div className="flex flex-col h-[600px]">
-              <div className="p-4 border-b border-gray-200">
-                <h3 className="font-semibold text-gray-900">Detalhes da Conversa</h3>
+              <div className="p-4 border-b border-gray-200 dark:border-slate-700">
+                <h3 className="font-semibold text-gray-900 dark:text-slate-100">Detalhes da Conversa</h3>
               </div>
-              <div className="flex-1 p-4 overflow-y-auto space-y-4">
+              <div className="flex-1 p-4 overflow-y-auto space-y-4 scrollbar-thin">
                 <div className="flex justify-start">
-                  <div className="bg-gray-100 rounded-lg px-4 py-2 max-w-[70%]">
-                    <p className="text-sm text-gray-900">Olá! Vi um apartamento no site e tenho interesse.</p>
-                    <p className="text-xs text-gray-500 mt-1">10:30</p>
+                  <div className="bg-gray-100 dark:bg-slate-700 rounded-lg px-4 py-2 max-w-[70%]">
+                    <p className="text-sm text-gray-900 dark:text-slate-100">Olá! Vi um apartamento no site e tenho interesse.</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">10:30</p>
                   </div>
                 </div>
                 <div className="flex justify-end">
@@ -103,18 +103,18 @@ export default function ConversationsPage() {
                   </div>
                 </div>
                 <div className="flex justify-start">
-                  <div className="bg-gray-100 rounded-lg px-4 py-2 max-w-[70%]">
-                    <p className="text-sm text-gray-900">Até R$ 500.000, perto do metrô.</p>
-                    <p className="text-xs text-gray-500 mt-1">10:32</p>
+                  <div className="bg-gray-100 dark:bg-slate-700 rounded-lg px-4 py-2 max-w-[70%]">
+                    <p className="text-sm text-gray-900 dark:text-slate-100">Até R$ 500.000, perto do metrô.</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">10:32</p>
                   </div>
                 </div>
               </div>
-              <div className="p-4 border-t border-gray-200">
+              <div className="p-4 border-t border-gray-200 dark:border-slate-700">
                 <div className="flex gap-2">
                   <input
                     type="text"
                     placeholder="Digite sua mensagem..."
-                    className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="flex-1 px-4 py-2 border border-gray-200 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                   <button className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700">
                     Enviar
@@ -123,7 +123,7 @@ export default function ConversationsPage() {
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-center h-[600px] text-gray-500">
+            <div className="flex items-center justify-center h-[600px] text-gray-500 dark:text-slate-400">
               Selecione uma conversa para visualizar
             </div>
           )}

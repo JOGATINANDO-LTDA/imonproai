@@ -20,15 +20,15 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    dashboardApi.metrics().then(setMetrics).finally(() => setLoading(false));
+    dashboardApi.metrics().then(setMetrics).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   if (loading) {
-    return <div className="animate-pulse text-gray-500">Carregando métricas...</div>;
+    return <div className="animate-pulse text-gray-500 dark:text-slate-400">Carregando métricas...</div>;
   }
 
   if (!metrics) {
-    return <div className="text-red-500">Erro ao carregar métricas</div>;
+    return <div className="text-red-500 dark:text-red-400">Erro ao carregar métricas</div>;
   }
 
   return (
@@ -91,8 +91,8 @@ export default function DashboardPage() {
 
       {/* Charts placeholder */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Conversas por Canal</h3>
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Conversas por Canal</h3>
           <div className="space-y-3">
             <ChannelBar channel="WhatsApp" count={45} total={100} />
             <ChannelBar channel="Telefone" count={25} total={100} />
@@ -101,8 +101,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Pipeline de Vendas</h3>
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Pipeline de Vendas</h3>
           <div className="space-y-3">
             <PipelineStage stage="Novo Lead" count={120} color="bg-blue-500" />
             <PipelineStage stage="Qualificado" count={80} color="bg-yellow-500" />
@@ -113,8 +113,8 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent activity */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Atividade Recente</h3>
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Atividade Recente</h3>
         <div className="space-y-4">
           <ActivityItem
             time="2 min atrás"
@@ -154,19 +154,19 @@ function MetricCard({
   color: string;
 }) {
   const colorClasses: Record<string, string> = {
-    blue: 'bg-blue-50 text-blue-700',
-    green: 'bg-green-50 text-green-700',
-    purple: 'bg-purple-50 text-purple-700',
-    amber: 'bg-amber-50 text-amber-700',
-    red: 'bg-red-50 text-red-700',
+    blue: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+    green: 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300',
+    purple: 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
+    amber: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
+    red: 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300',
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
+    <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-600">{title}</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+          <p className="text-sm text-gray-600 dark:text-slate-400">{title}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-slate-100 mt-1">{value}</p>
         </div>
         <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-xl ${colorClasses[color]}`}>
           {icon}
@@ -181,10 +181,10 @@ function ChannelBar({ channel, count, total }: { channel: string; count: number;
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-sm">
-        <span className="text-gray-600">{channel}</span>
-        <span className="font-medium text-gray-900">{count}</span>
+        <span className="text-gray-600 dark:text-slate-400">{channel}</span>
+        <span className="font-medium text-gray-900 dark:text-slate-100">{count}</span>
       </div>
-      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+      <div className="h-2 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
         <div className="h-full bg-primary-500 rounded-full" style={{ width: `${percentage}%` }} />
       </div>
     </div>
@@ -195,8 +195,8 @@ function PipelineStage({ stage, count, color }: { stage: string; count: number; 
   return (
     <div className="flex items-center gap-3">
       <div className={`w-3 h-3 rounded-full ${color}`} />
-      <span className="flex-1 text-sm text-gray-600">{stage}</span>
-      <span className="text-sm font-medium text-gray-900">{count}</span>
+      <span className="flex-1 text-sm text-gray-600 dark:text-slate-400">{stage}</span>
+      <span className="text-sm font-medium text-gray-900 dark:text-slate-100">{count}</span>
     </div>
   );
 }
@@ -213,8 +213,8 @@ function ActivityItem({ time, message, type }: { time: string; message: string; 
     <div className="flex items-start gap-3">
       <span className="text-lg">{icons[type]}</span>
       <div className="flex-1">
-        <p className="text-sm text-gray-900">{message}</p>
-        <p className="text-xs text-gray-500">{time}</p>
+        <p className="text-sm text-gray-900 dark:text-slate-100">{message}</p>
+        <p className="text-xs text-gray-500 dark:text-slate-400">{time}</p>
       </div>
     </div>
   );

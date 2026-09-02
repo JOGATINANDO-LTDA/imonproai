@@ -7,6 +7,11 @@
   --background: #f8f9fa;
 }
 
+.dark {
+  --foreground: #e2e8f0;
+  --background: #0f172a;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
@@ -16,5 +21,18 @@ body {
 @layer utilities {
   .scrollbar-thin {
     scrollbar-width: thin;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.3);
+    border-radius: 3px;
+  }
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(100, 116, 139, 0.3);
   }
 }
