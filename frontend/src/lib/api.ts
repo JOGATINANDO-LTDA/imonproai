@@ -18,8 +18,11 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  const body = options.body ? JSON.stringify(options.body) : undefined;
+
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
+    body,
     headers,
   });
 

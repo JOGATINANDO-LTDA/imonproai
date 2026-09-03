@@ -1,3 +1,4 @@
+import logging
 import operator
 from typing import Annotated, Any, Literal, TypedDict
 
@@ -7,8 +8,10 @@ from langchain_openai import ChatOpenAI
 from langgraph.graph import END, StateGraph
 from langgraph.prebuilt import ToolNode
 
+from app.agent.model_manager import ModelManager
 from app.core.config import get_settings
 
+logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
@@ -91,8 +94,54 @@ class ImobProAgent:
         self.tenant_name = tenant_name
         self.agent_name = agent_name
         self.commercial_rules = commercial_rules
-        self.llm = ChatOpenAI(model=llm_model, temperature=settings.AGENT_TEMPERATURE)
+        self.llm_model = llm_model
         self.tools = tools
+        self._model_manager = ModelManager()
+
+    async def _setup_llm(self) -> None:
+        """Configura o LLM com o provider correto, carregando o modelo se necessário."""
+        provider = self._model_manager.get_provider_for_model(self.llm_model)
+
+        if provider is None:
+            # Modelo não está carregado — tentar carregar
+            result = await self._model_manager.ensure_loaded(
+                self.llm_model,
+                fallback_model=settings.MODEL_DEFAULT,
+            )
+            if result.get("status") == "error":
+                raise RuntimeError(f"Não foi possível carregar o modelo {self.llm_model}: {result.get('error')}")
+            provider = self._model_manager.get_provider_for_model(self.llm_model)
+            # Usar o modelo que foi efetivamente carregado
+            if result.get("model") and result["model"] != self.llm_model:
+                self.llm_model = result["model"]
+
+        if provider is None:
+            # Último recurso: usar ChatOpenAI direto (OpenAI compatível)
+            kwargs: dict[str, Any] = {"model": self.llm_model, "temperature": settings.AGENT_TEMPERATURE}
+            if settings.OPENAI_API_BASE:
+                kwargs["base_url"] = settings.OPENAI_API_BASE
+            self.llm = ChatOpenAI(**kwargs)
+        else:
+            # Usar o provider via OpenAI-compatible endpoint
+            base_url = getattr(provider, "base_url", None)
+            if base_url:
+                # Garantir que /v1 está no final para compatibilidade OpenAI
+                openai_base_url = base_url.rstrip("/")
+                if not openai_base_url.endswith("/v1"):
+                    openai_base_url = f"{openai_base_url}/v1"
+                self.llm = ChatOpenAI(
+                    model=self.llm_model,
+                    temperature=settings.AGENT_TEMPERATURE,
+                    base_url=openai_base_url,
+                    api_key="lm-studio",
+                )
+            else:
+                # Provider não tem base_url OpenAI-compatible (ex: Groq via raw httpx)
+                kwargs = {"model": self.llm_model, "temperature": settings.AGENT_TEMPERATURE}
+                if settings.OPENAI_API_BASE:
+                    kwargs["base_url"] = settings.OPENAI_API_BASE
+                self.llm = ChatOpenAI(**kwargs)
+
         self.llm_with_tools = self.llm.bind_tools(self.tools)
 
     def _build_system_prompt(self) -> str:
@@ -134,6 +183,9 @@ class ImobProAgent:
         history: list[dict] | None = None,
         context: dict | None = None,
     ) -> str:
+        await self._setup_llm()
+        self._model_manager.touch(self.llm_model)
+
         graph = self.build_graph()
 
         messages = []

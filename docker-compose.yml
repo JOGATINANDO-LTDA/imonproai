@@ -33,6 +33,8 @@ services:
       dockerfile: Dockerfile.backend
     ports:
       - "8888:8000"
+    env_file:
+      - backend/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://imobpro:imobpro@postgres:5432/imobpro
       REDIS_URL: redis://redis:6379/0
@@ -49,6 +51,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
+    env_file:
+      - backend/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://imobpro:imobpro@postgres:5432/imobpro
       REDIS_URL: redis://redis:6379/0
@@ -63,6 +67,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
+    env_file:
+      - backend/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://imobpro:imobpro@postgres:5432/imobpro
       REDIS_URL: redis://redis:6379/0
@@ -77,10 +83,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8888
     ports:
       - "3010:3000"
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
     depends_on:
       - backend
 

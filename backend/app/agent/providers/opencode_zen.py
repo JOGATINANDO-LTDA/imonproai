@@ -1,10 +1,17 @@
 import httpx
 
-from app.agent.providers.base import BaseProvider
+from app.agent.providers.base import BaseProvider, ModelInfo
+
+# Modelos gratuitos disponíveis no Opencode ZEN
+ZEN_MODELS = [
+    ModelInfo(name="nemotron-3-ultra-free", loaded=False, provider="opencode-zen"),
+    ModelInfo(name="llama-3.3-70b-versatile", loaded=False, provider="opencode-zen"),
+    ModelInfo(name="gemma-2-9b-it", loaded=False, provider="opencode-zen"),
+]
 
 
 class OpencodeZenProvider(BaseProvider):
-    """Provider Opencode ZEN (gratuito + pay-as-you-go)."""
+    """Provider Opencode ZEN (gratuito)."""
 
     def __init__(self, api_key: str):
         self.api_key = api_key
@@ -17,6 +24,10 @@ class OpencodeZenProvider(BaseProvider):
     @property
     def is_available(self) -> bool:
         return bool(self.api_key)
+
+    async def list_models(self) -> list[ModelInfo]:
+        """Retorna modelos conhecidos do Opencode ZEN."""
+        return ZEN_MODELS.copy()
 
     async def chat(self, messages: list[dict], model: str | None = None) -> dict:
         async with httpx.AsyncClient() as client:

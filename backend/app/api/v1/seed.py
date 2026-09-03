@@ -69,7 +69,7 @@ async def seed_demo_data(db: AsyncSession = Depends(get_db)):
         tenant_id=TENANT_ID,
         name="Assistente Virtual",
         voice_id="nova",
-        llm_model="gpt-4o",
+        llm_model="qwen3.5-9b-deepseek-v4-flash",
         system_prompt=(
             "Você é um assistente virtual da Imobiliária Modelo. "
             "Ajude clientes a encontrar imóveis ideais. "
@@ -82,7 +82,7 @@ async def seed_demo_data(db: AsyncSession = Depends(get_db)):
         tenant_id=TENANT_ID,
         name="Consultor Especializado",
         voice_id="vera",
-        llm_model="gpt-4o-mini",
+        llm_model="qwen3.5-9b-deepseek-v4-flash",
         system_prompt=(
             "Você é um consultor imobiliário especializado em imóveis de alto padrão. "
             "Tenha conhecimento detalhado sobre bairros, valores e condições de pagamento."

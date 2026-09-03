@@ -14,7 +14,11 @@ class VoiceService:
     """Serviço de integração de voz/telefone via Twilio."""
 
     def __init__(self):
-        self.client = TwilioClient(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+        if settings.TWILIO_ACCOUNT_SID and settings.TWILIO_AUTH_TOKEN:
+            self.client = TwilioClient(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+        else:
+            self.client = None
+            logger.warning("Twilio não configurado. Modo local ativado.")
         self.phone_number = settings.TWILIO_PHONE_NUMBER
 
     def create_inbound_twiml(
@@ -54,6 +58,8 @@ class VoiceService:
         return str(response)
 
     def make_call(self, to: str, url: str) -> dict[str, Any]:
+        if not self.client:
+            raise RuntimeError("Twilio não configurado. Configure TWILIO_ACCOUNT_SID e TWILIO_AUTH_TOKEN.")
         call = self.client.calls.create(
             to=to,
             from_=self.phone_number,

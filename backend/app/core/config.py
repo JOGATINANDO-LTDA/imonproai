@@ -1,5 +1,3 @@
-from functools import lru_cache
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -25,10 +23,25 @@ class Settings(BaseSettings):
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    # OpenAI
+    # OpenAI / LLM Provider
     OPENAI_API_KEY: str = ""
+    OPENAI_API_BASE: str = ""
     OPENAI_MODEL: str = "gpt-4o"
     OPENAI_MODEL_FAST: str = "gpt-4o-mini"
+
+    # LMStudio
+    LMSTUDIO_URL: str = "http://host.docker.internal:1234"
+
+    # Opencode ZEN (gratuito)
+    OPencode_ZEN_API_KEY: str = ""
+
+    # Groq
+    GROQ_API_KEY: str = ""
+
+    # Model Manager
+    MODEL_TTL_SECONDS: int = 300
+    MODEL_FALLBACK_PROVIDER: str = "opencode-zen"
+    MODEL_DEFAULT: str = "qwen3.5-9b-deepseek-v4-flash"
 
     # LangSmith
     LANGCHAIN_TRACING_V2: bool = False
@@ -62,7 +75,7 @@ class Settings(BaseSettings):
     QDRANT_API_KEY: str = ""
 
     # CORS
-    CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:8000"]
+    CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:3010", "http://localhost:8000"]
 
     # Agent defaults
     AGENT_MAX_ITERATIONS: int = 15
@@ -99,6 +112,5 @@ DIRETRIZES:
 7. Encaminhe para humano quando: reclamação formal, negociação de desconto >10%, ou pedido explicito"""
 
 
-@lru_cache
 def get_settings() -> Settings:
     return Settings()

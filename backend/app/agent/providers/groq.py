@@ -1,6 +1,14 @@
 import httpx
 
-from app.agent.providers.base import BaseProvider
+from app.agent.providers.base import BaseProvider, ModelInfo
+
+# Modelos conhecidos do Groq
+GROQ_MODELS = [
+    ModelInfo(name="llama-3.3-70b-versatile", loaded=False, provider="groq"),
+    ModelInfo(name="llama-3.1-8b-instant", loaded=False, provider="groq"),
+    ModelInfo(name="gemma2-9b-it", loaded=False, provider="groq"),
+    ModelInfo(name="mixtral-8x7b-32768", loaded=False, provider="groq"),
+]
 
 
 class GroqProvider(BaseProvider):
@@ -17,6 +25,10 @@ class GroqProvider(BaseProvider):
     @property
     def is_available(self) -> bool:
         return bool(self.api_key)
+
+    async def list_models(self) -> list[ModelInfo]:
+        """Retorna modelos conhecidos do Groq."""
+        return GROQ_MODELS.copy()
 
     async def chat(self, messages: list[dict], model: str | None = None) -> dict:
         async with httpx.AsyncClient() as client:

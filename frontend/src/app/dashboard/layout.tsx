@@ -13,6 +13,8 @@ const navigation = [
   { name: 'Imóveis', href: '/dashboard/properties', icon: '🏠' },
   { name: 'Conversas', href: '/dashboard/conversations', icon: '💬' },
   { name: 'Agentes', href: '/dashboard/agents', icon: '🤖' },
+  { name: 'Modelos', href: '/dashboard/models', icon: '🧠' },
+  { name: 'Teste de Voz', href: '/dashboard/voice-test', icon: '📞' },
   { name: 'Configurações', href: '/dashboard/settings', icon: '⚙️' },
 ];
 

@@ -28,14 +28,8 @@ export default function Home() {
         </div>
         <div className="flex gap-4 justify-center">
           <Link
-            href="/dashboard"
-            className="px-8 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
-          >
-            Acessar Dashboard
-          </Link>
-          <Link
             href="/login"
-            className="px-8 py-3 border border-primary-600 text-primary-600 dark:text-primary-400 rounded-lg font-medium hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+            className="px-8 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
           >
             Login
           </Link>
