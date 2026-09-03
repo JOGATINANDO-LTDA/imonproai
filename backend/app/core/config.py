@@ -38,6 +38,15 @@ class Settings(BaseSettings):
     # Groq
     GROQ_API_KEY: str = ""
 
+    # OpenRouter
+    OPENROUTER_API_KEY: str = ""
+
+    # Kilo Gateway
+    KILO_API_KEY: str = ""
+
+    # Opencode Go ($10/mês)
+    OPENCODE_GO_API_KEY: str = ""
+
     # Model Manager
     MODEL_TTL_SECONDS: int = 300
     MODEL_FALLBACK_PROVIDER: str = "opencode-zen"

@@ -5,8 +5,11 @@ from dataclasses import dataclass, field
 
 from app.agent.providers.base import BaseProvider, ModelInfo
 from app.agent.providers.groq import GroqProvider
+from app.agent.providers.kilo import KiloProvider
 from app.agent.providers.lmstudio import LMStudioProvider
+from app.agent.providers.opencode_go import OpenCodeGoProvider
 from app.agent.providers.opencode_zen import OpencodeZenProvider
+from app.agent.providers.openrouter import OpenRouterProvider
 from app.agent.providers.registry import ProviderRegistry
 from app.core.config import get_settings
 
@@ -48,13 +51,31 @@ class ModelManager:
 
     def _setup_providers(self) -> None:
         """Registra providers disponíveis."""
+        # 1. LMStudio (local, sem auth)
         lmstudio = LMStudioProvider(base_url=settings.LMSTUDIO_URL)
         self._registry.register(lmstudio)
 
+        # 2. OpenRouter (26+ free, 50 req/dia)
+        if settings.OPENROUTER_API_KEY:
+            openrouter = OpenRouterProvider(api_key=settings.OPENROUTER_API_KEY)
+            self._registry.register(openrouter)
+
+        # 3. Kilo Gateway (8+ free, 200 req/hr)
+        if settings.KILO_API_KEY:
+            kilo = KiloProvider(api_key=settings.KILO_API_KEY)
+            self._registry.register(kilo)
+
+        # 4. Opencode Zen (7 free, pay-per-token)
         if settings.OPencode_ZEN_API_KEY:
             zen = OpencodeZenProvider(api_key=settings.OPencode_ZEN_API_KEY)
             self._registry.register(zen)
 
+        # 5. Opencode Go ($10/mês, 25+ modelos)
+        if settings.OPENCODE_GO_API_KEY:
+            go = OpenCodeGoProvider(api_key=settings.OPENCODE_GO_API_KEY)
+            self._registry.register(go)
+
+        # 6. Groq (4 models, 2000 req/dia)
         if settings.GROQ_API_KEY:
             groq = GroqProvider(api_key=settings.GROQ_API_KEY)
             self._registry.register(groq)
