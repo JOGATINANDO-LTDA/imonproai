@@ -133,6 +133,38 @@ class ModelManager:
     async def _do_load(self, provider: BaseProvider, model: str, ttl: int) -> dict:
         """Executa o load em um provider e atualiza o estado."""
         key = f"{provider.name}:{model}"
+
+        # 1. Verificar se já está no ModelManager
+        existing = self._models.get(key)
+        if existing and existing.loaded:
+            existing.last_used = time.time()
+            logger.info(f"Modelo {model} já está registrado como carregado, resetando TTL")
+            return {"status": "already_loaded", "model": model, "instance_id": existing.instance_id}
+
+        # 2. Verificar se já está carregado no provider (estado real)
+        if provider.supports_model_management:
+            try:
+                is_loaded = await provider.is_model_loaded(model)
+                if is_loaded:
+                    # Registrar no ModelManager SEM chamar load_model novamente
+                    models = await provider.list_models()
+                    for m in models:
+                        if m.name == model and m.loaded:
+                            self._models[key] = ModelEntry(
+                                name=model,
+                                provider_name=provider.name,
+                                loaded=True,
+                                instance_id=m.instance_id,
+                                last_used=time.time(),
+                                ttl_seconds=ttl,
+                            )
+                            self._start_ttl_task()
+                            logger.info(f"Modelo {model} já estava carregado no {provider.name}, registrado sem recarregar")
+                            return {"status": "already_loaded", "model": model, "instance_id": m.instance_id}
+            except Exception as e:
+                logger.debug(f"Erro ao verificar modelo {model} no {provider.name}: {e}")
+
+        # 3. Carregar o modelo
         result = await provider.load_model(model, ttl=ttl)
 
         if result.get("status") == "loaded":
@@ -170,24 +202,49 @@ class ModelManager:
 
     async def ensure_loaded(self, model: str, fallback_model: str | None = None) -> dict:
         """Garante que um modelo está carregado. Carrega se necessário. Usado pelo engine."""
-        # Verificar se já está carregado
+        # 1. Verificar se já está no ModelManager
         for key, entry in self._models.items():
             if entry.name == model and entry.loaded:
                 entry.last_used = time.time()
                 return {"provider": entry.provider_name, "model": model, "status": "already_loaded"}
 
-        # Tentar carregar o modelo solicitado
-        result = await self.load_model(model)
-        if result.get("status") == "loaded":
-            return {"provider": result.get("provider", "unknown"), "model": model, "status": "loaded"}
+        # 2. Verificar se já está carregado no provider (estado real)
+        for name in self._registry.available_providers:
+            provider = self._registry.get(name)
+            if provider and provider.supports_model_management:
+                try:
+                    is_loaded = await provider.is_model_loaded(model)
+                    if is_loaded:
+                        # Registrar no ModelManager sem recarregar
+                        models = await provider.list_models()
+                        for m in models:
+                            if m.name == model and m.loaded:
+                                key = f"{provider.name}:{model}"
+                                self._models[key] = ModelEntry(
+                                    name=model,
+                                    provider_name=provider.name,
+                                    loaded=True,
+                                    instance_id=m.instance_id,
+                                    last_used=time.time(),
+                                    ttl_seconds=settings.MODEL_TTL_SECONDS,
+                                )
+                                self._start_ttl_task()
+                                return {"provider": provider.name, "model": model, "status": "already_loaded"}
+                except Exception:
+                    pass
 
-        # Fallback
+        # 3. Tentar carregar o modelo solicitado
+        result = await self.load_model(model)
+        if result.get("status") in ("loaded", "already_loaded"):
+            return {"provider": result.get("provider", "unknown"), "model": model, "status": result["status"]}
+
+        # 4. Fallback
         if fallback_model:
             result = await self.load_model(fallback_model)
-            if result.get("status") == "loaded":
-                return {"provider": result.get("provider", "unknown"), "model": fallback_model, "status": "loaded_fallback"}
+            if result.get("status") in ("loaded", "already_loaded"):
+                return {"provider": result.get("provider", "unknown"), "model": fallback_model, "status": f"loaded_fallback"}
 
-        # Fallback para primeiro provider disponível
+        # 5. Fallback para primeiro provider disponível
         for name in self._registry.available_providers:
             provider = self._registry.get(name)
             if provider and provider.supports_model_management:
@@ -195,7 +252,7 @@ class ModelManager:
                 if models:
                     first_model = models[0].name
                     result = await self.load_model(first_model, provider_name=name)
-                    if result.get("status") == "loaded":
+                    if result.get("status") in ("loaded", "already_loaded"):
                         return {"provider": name, "model": first_model, "status": "loaded_fallback"}
 
         return {"provider": None, "model": model, "status": "error", "error": "Não foi possível carregar nenhum modelo"}
