@@ -125,11 +125,20 @@ async def voice_simulate(req: SimulateRequest):
 
 
 @router.post("/inbound")
-async def voice_inbound(From: str = Form(...), To: str = Form(...), CallSid: str = Form(...)):
+async def voice_inbound(
+    From: str = Form(...),
+    To: str = Form(...),
+    CallSid: str = Form(...),
+    agent_id: str | None = Form(None),
+    conversation_id: str | None = Form(None),
+):
     phone = From.replace("+", "")
 
     async with AsyncSessionLocal() as db:
-        result = await db.execute(select(Agent).where(Agent.phone_number == To))
+        if agent_id:
+            result = await db.execute(select(Agent).where(Agent.id == agent_id))
+        else:
+            result = await db.execute(select(Agent).where(Agent.phone_number == To))
         agent = result.scalar_one_or_none()
         if not agent:
             twiml = voice_service.create_callback_twiml(
@@ -161,94 +170,121 @@ async def voice_inbound(From: str = Form(...), To: str = Form(...), CallSid: str
         await db.flush()
         await db.commit()
 
-    twiml = voice_service.create_inbound_twiml()
+    twiml = voice_service.create_inbound_twiml(
+        agent_id=str(agent.id),
+        conversation_id=str(conversation.id),
+    )
     return Response(content=twiml, media_type="application/xml")
 
 
 @router.post("/speech-result")
 async def voice_speech_result(
-    SpeechResult: str = Form(...),
-    CallSid: str = Form(...),
-    From: str = Form(...),
-    To: str = Form(...),
+    SpeechResult: str = Form(""),
+    CallSid: str = Form(""),
+    From: str = Form(""),
+    To: str = Form(""),
+    agent_id: str | None = Form(None),
+    conversation_id: str | None = Form(None),
 ):
     phone = From.replace("+", "")
 
-    async with AsyncSessionLocal() as db:
-        result = await db.execute(select(Agent).where(Agent.phone_number == To))
-        agent = result.scalar_one_or_none()
-        if not agent:
-            twiml = voice_service.create_callback_twiml("Desculpe, ocorreu um erro.")
-            return Response(content=twiml, media_type="application/xml")
+    try:
+        async with AsyncSessionLocal() as db:
+            if agent_id:
+                result = await db.execute(select(Agent).where(Agent.id == agent_id))
+            else:
+                result = await db.execute(select(Agent).where(Agent.phone_number == To))
+            agent = result.scalar_one_or_none()
+            if not agent:
+                twiml = voice_service.create_callback_twiml("Desculpe, ocorreu um erro.")
+                return Response(content=twiml, media_type="application/xml")
 
-        contact_result = await db.execute(
-            select(Contact).where(Contact.phone == phone, Contact.tenant_id == agent.tenant_id),
+            contact_result = await db.execute(
+                select(Contact).where(Contact.phone == phone, Contact.tenant_id == agent.tenant_id),
+            )
+            contact = contact_result.scalar_one_or_none()
+
+            if conversation_id:
+                conv_result = await db.execute(
+                    select(Conversation).where(Conversation.id == conversation_id)
+                )
+            else:
+                conv_result = await db.execute(
+                    select(Conversation).where(
+                        Conversation.agent_id == agent.id,
+                        Conversation.contact_id == contact.id if contact else False,
+                        Conversation.channel == "voice",
+                        Conversation.status == "active",
+                    ),
+                )
+            conversation = conv_result.scalar_one_or_none()
+            if not conversation:
+                twiml = voice_service.create_callback_twiml("Desculpe, não encontrei sua conversa.")
+                return Response(content=twiml, media_type="application/xml")
+
+            user_msg = Message(
+                conversation_id=conversation.id,
+                role="user",
+                content=SpeechResult,
+                content_type="text",
+            )
+            db.add(user_msg)
+
+            tenant_result = await db.execute(select(Tenant).where(Tenant.id == agent.tenant_id))
+            tenant = tenant_result.scalar_one_or_none()
+
+            ai_agent = ImobProAgent(
+                tenant_name=tenant.name if tenant else "Imobiliária",
+                agent_name=agent.name,
+                commercial_rules=tenant.commercial_rules if tenant else "",
+                llm_model=agent.llm_model,
+            )
+
+            hist_result = await db.execute(
+                select(Message)
+                .where(Message.conversation_id == conversation.id)
+                .order_by(Message.created_at.desc())
+                .limit(20),
+            )
+            history = [
+                {"role": m.role, "content": m.content} for m in reversed(hist_result.scalars().all())
+            ]
+
+            ai_response = await ai_agent.process_message(
+                user_message=SpeechResult,
+                channel="voice",
+                history=history,
+                context={
+                    "tenant_id": agent.tenant_id,
+                    "contact_id": contact.id if contact else "",
+                    "phone": phone,
+                },
+            )
+
+            assistant_msg = Message(
+                conversation_id=conversation.id,
+                role="assistant",
+                content=ai_response,
+                content_type="text",
+            )
+            db.add(assistant_msg)
+            await db.commit()
+
+        twiml = voice_service.create_speech_response(
+            ai_response,
+            continue_listening=True,
+            agent_id=agent_id,
+            conversation_id=str(conversation.id),
         )
-        contact = contact_result.scalar_one_or_none()
+        return Response(content=twiml, media_type="application/xml")
 
-        conv_result = await db.execute(
-            select(Conversation).where(
-                Conversation.agent_id == agent.id,
-                Conversation.contact_id == contact.id if contact else False,
-                Conversation.channel == "voice",
-                Conversation.status == "active",
-            ),
+    except Exception as e:
+        logger.error(f"Erro no speech-result: {e}")
+        twiml = voice_service.create_speech_response(
+            "Desculpe, tive um problema técnico. Pode repetir?",
+            continue_listening=True,
         )
-        conversation = conv_result.scalar_one_or_none()
-        if not conversation:
-            twiml = voice_service.create_callback_twiml("Desculpe, não encontrei sua conversa.")
-            return Response(content=twiml, media_type="application/xml")
-
-        user_msg = Message(
-            conversation_id=conversation.id,
-            role="user",
-            content=SpeechResult,
-            content_type="text",
-        )
-        db.add(user_msg)
-
-        tenant_result = await db.execute(select(Tenant).where(Tenant.id == agent.tenant_id))
-        tenant = tenant_result.scalar_one_or_none()
-
-        ai_agent = ImobProAgent(
-            tenant_name=tenant.name if tenant else "Imobiliária",
-            agent_name=agent.name,
-            commercial_rules=tenant.commercial_rules if tenant else "",
-            llm_model=agent.llm_model,
-        )
-
-        hist_result = await db.execute(
-            select(Message)
-            .where(Message.conversation_id == conversation.id)
-            .order_by(Message.created_at.desc())
-            .limit(20),
-        )
-        history = [
-            {"role": m.role, "content": m.content} for m in reversed(hist_result.scalars().all())
-        ]
-
-        ai_response = await ai_agent.process_message(
-            user_message=SpeechResult,
-            channel="voice",
-            history=history,
-            context={
-                "tenant_id": agent.tenant_id,
-                "contact_id": contact.id if contact else "",
-                "phone": phone,
-            },
-        )
-
-        assistant_msg = Message(
-            conversation_id=conversation.id,
-            role="assistant",
-            content=ai_response,
-            content_type="text",
-        )
-        db.add(assistant_msg)
-        await db.commit()
-
-    twiml = voice_service.create_speech_response(ai_response, continue_listening=True)
-    return Response(content=twiml, media_type="application/xml")
+        return Response(content=twiml, media_type="application/xml")
 
 
 @router.post("/outbound")
@@ -259,7 +295,7 @@ async def voice_outbound(to: str, agent_id: str, message: str = ""):
         if not agent:
             return {"error": "Agente não encontrado"}
 
-        url = f"{settings.TWILIO_WEBHOOK_URL}/api/v1/voice/inbound"
+        url = f"{settings.TWILIO_WEBHOOK_URL}/api/v1/voice/inbound?agent_id={agent_id}"
         call_result = voice_service.make_call(to=to, url=url)
         return {"status": "calling", "call_sid": call_result["call_sid"]}
 
@@ -271,4 +307,27 @@ async def voice_status(
     CallDuration: str = Form(None),
 ):
     logger.info(f"Status da chamada {CallSid}: {CallStatus} (duração: {CallDuration}s)")
+
+    if CallStatus in ("completed", "failed", "busy", "no-answer", "canceled"):
+        try:
+            async with AsyncSessionLocal() as db:
+                result = await db.execute(
+                    select(Conversation).where(
+                        Conversation.channel == "voice",
+                        Conversation.status == "active",
+                    ).order_by(Conversation.created_at.desc()).limit(1)
+                )
+                conversation = result.scalar_one_or_none()
+                if conversation:
+                    conversation.status = "closed"
+                    if CallDuration:
+                        conversation.metadata = conversation.metadata or {}
+                        conversation.metadata["call_duration"] = int(CallDuration)
+                        conversation.metadata["call_sid"] = CallSid
+                        conversation.metadata["call_status"] = CallStatus
+                    await db.commit()
+                    logger.info(f"Conversa {conversation.id} fechada (chamada {CallStatus})")
+        except Exception as e:
+            logger.error(f"Erro ao fechar conversa no status callback: {e}")
+
     return Response(status_code=200)

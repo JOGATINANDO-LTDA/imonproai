@@ -22,12 +22,23 @@ class VoiceService:
         self.phone_number = settings.TWILIO_PHONE_NUMBER
 
     def create_inbound_twiml(
-        self, greeting: str = "Olá! Bem-vindo à nossa imobiliária. Como posso ajudar?"
+        self, greeting: str = "Olá! Bem-vindo à nossa imobiliária. Como posso ajudar?",
+        agent_id: str | None = None, conversation_id: str | None = None,
     ) -> str:
+        params = ""
+        if agent_id:
+            params += f"?agent_id={agent_id}"
+        if conversation_id:
+            params += "&" if params else "?"
+            params += f"conversation_id={conversation_id}"
+
+        action_url = f"/api/v1/voice/speech-result{params}"
+        redirect_url = f"/api/v1/voice/speech-result{params}"
+
         response = VoiceResponse()
         gather = Gather(
             input="speech",
-            action="/api/v1/voice/speech-result",
+            action=action_url,
             method="POST",
             timeout=5,
             language="pt-BR",
@@ -35,15 +46,28 @@ class VoiceService:
         )
         gather.say(voice="Pt-BR-FranciscoNeural", language="pt-BR", text=greeting)
         response.append(gather)
-        response.redirect("/api/v1/voice/speech-result", method="POST")
+        response.redirect(redirect_url, method="POST")
         return str(response)
 
-    def create_speech_response(self, text: str, continue_listening: bool = True) -> str:
+    def create_speech_response(
+        self, text: str, continue_listening: bool = True,
+        agent_id: str | None = None, conversation_id: str | None = None,
+    ) -> str:
+        params = ""
+        if agent_id:
+            params += f"?agent_id={agent_id}"
+        if conversation_id:
+            params += "&" if params else "?"
+            params += f"conversation_id={conversation_id}"
+
+        action_url = f"/api/v1/voice/speech-result{params}"
+        redirect_url = f"/api/v1/voice/speech-result{params}"
+
         response = VoiceResponse()
         if continue_listening:
             gather = Gather(
                 input="speech",
-                action="/api/v1/voice/speech-result",
+                action=action_url,
                 method="POST",
                 timeout=5,
                 language="pt-BR",
@@ -51,7 +75,7 @@ class VoiceService:
             )
             gather.say(voice="Pt-BR-FranciscoNeural", language="pt-BR", text=text)
             response.append(gather)
-            response.redirect("/api/v1/voice/speech-result", method="POST")
+            response.redirect(redirect_url, method="POST")
         else:
             response.say(voice="Pt-BR-FranciscoNeural", language="pt-BR", text=text)
             response.hangup()
